@@ -22,6 +22,7 @@ const client = twilio(accountSid, authToken);
 export const sendotp = (req,res) => {
     
     const phone = req.body.phone;
+	const country_code = req.body.country_code;
 	if(phone.length!=10)
 	{
 		res.status(400).send({ phone});  
@@ -39,13 +40,13 @@ export const sendotp = (req,res) => {
 		.create({
 			body: `Your one time login password for ${process.env.NAME} is ${otp}`,
 			from: twilioNum,
-			to: phone
+			to: country_code+phone
 		})
 		.then((messages) => console.log(messages))
 		.catch((err) => console.error(err)); */
 
 
-    res.status(200).send({ phone, hash: fullHash ,otp:otp});  
+    res.status(200).send({ phone, hash: fullHash ,otp:otp,country_code:country_code});  
 
 }
 
@@ -54,6 +55,7 @@ export const verifysignup = async (req,res) => {
 	const phone = req.body.phone;
 	const hash = req.body.hash;
 	const otp = req.body.otp;
+	const country_code = req.body.country_code;
 
 	let [ hashValue, expires ] = hash.split('.');
 
@@ -71,14 +73,50 @@ export const verifysignup = async (req,res) => {
 			if(existingUser){
 				return res.status(400).send({ verification: true, msg: 'User already exists'});
 			}
-			const result = await User.create({phone});
-			const token=jwt.sign({phone:result.phone,id:result._id},JWT_AUTH_TOKEN,{expiresIn:"48h"});
+			const result = await User.create({phone,country_code});
+			const token=jwt.sign({user:result},JWT_AUTH_TOKEN,{expiresIn:"48h"});
 			return res.status(201).send({user:result,token:token});
 		}catch (error){
 			return res.status(400).send(error);
 		}
 
-		res.status(200).send({ phone, verification:true,msg:'Verified'});  
+	}else {
+		console.log('not authenticated');
+		return res.status(400).send({ verification: false, msg: 'Incorrect OTP' });
+	}
+}
+
+
+export const verifysignin = async (req,res) => {
+	const phone = req.body.phone;
+	const country_code = req.body.country_code;
+	const hash = req.body.hash;
+	const otp = req.body.otp;
+
+	let [ hashValue, expires ] = hash.split('.');
+
+	let now = Date.now();
+	if (now > parseInt(expires)) {
+		return res.status(504).send({ msg: 'Timeout. Please try again' });}
+	let data = `${phone}.${otp}.${expires}`;
+	let newCalculatedHash = crypto.createHmac('sha256', smsKey).update(data).digest('hex');
+
+	if (newCalculatedHash === hashValue) {
+		console.log('user confirmed');
+		
+		try{
+			const existingUser = await User.findOne({phone});
+			
+			if(!existingUser){
+				return res.status(400).send({ verification: true, msg: 'User does not exists'});
+			}
+			
+			const token=jwt.sign({user:existingUser},JWT_AUTH_TOKEN,{expiresIn:"48h"});
+			return res.status(200).send({user:existingUser,token:token});
+		}catch (error){
+			return res.status(400).send(error);
+		}
+		 
 	}else {
 		console.log('not authenticated');
 		return res.status(400).send({ verification: false, msg: 'Incorrect OTP' });
