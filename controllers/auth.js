@@ -20,6 +20,22 @@ const authToken = process.env.TWILIO_AUTH_TOKEN;
 
 const client = twilio(accountSid, authToken);
 
+
+export const verifyjwt = (req,res) => {
+	
+	const token = req.headers.authorization.split(" ")[1];
+	console.log(token);
+	
+	try{
+		const decoded=jwt.verify(token,JWT_AUTH_TOKEN);
+		return res.status(200).send(decoded.user);
+	}catch (error)
+	{
+		return res.status(400).send("Invalid token");
+	}
+	
+}
+
 export const sendotp = (req,res) => {
     
     const phone = req.body.phone;
