@@ -6,6 +6,7 @@ import mongoose from 'mongoose';
 import jwt from "jsonwebtoken";
 
 import User from "../models/user.js";
+import Block from "../models/block.js";
 
 const router = express.Router();
 
@@ -46,7 +47,7 @@ export const sendotp = (req,res) => {
 		.catch((err) => console.error(err)); */
 
 
-    res.status(200).send({ phone, hash: fullHash ,otp:otp,country_code:country_code});  
+    res.status(200).send({ phone, hash: fullHash ,otp:otp,country_code:country_code,retry:5});  
 
 }
 
@@ -74,6 +75,7 @@ export const verifysignup = async (req,res) => {
 				return res.status(400).send({ verification: true, msg: 'User already exists'});
 			}
 			const result = await User.create({phone,country_code});
+			const newblock = await Block.create({phone,country_code});
 			const token=jwt.sign({user:result},JWT_AUTH_TOKEN,{expiresIn:"48h"});
 			return res.status(201).send({user:result,token:token});
 		}catch (error){
@@ -110,8 +112,15 @@ export const verifysignin = async (req,res) => {
 			if(!existingUser){
 				return res.status(400).send({ verification: true, msg: 'User does not exists'});
 			}
-			
+			const existingBlock = await Block.findOne({phone});
+			if(existingBlock.blocked==true)
+			{
+				return res.status(400).send({ verification: false, msg: 'Your account is blocked due to too many incorrect otp attempts. Kindly contact us on our customer care'});
+			}
+			existingBlock.attempts=5;
+			existingBlock.save();
 			const token=jwt.sign({user:existingUser},JWT_AUTH_TOKEN,{expiresIn:"48h"});
+
 			return res.status(200).send({user:existingUser,token:token});
 		}catch (error){
 			return res.status(400).send(error);
@@ -119,7 +128,21 @@ export const verifysignin = async (req,res) => {
 		 
 	}else {
 		console.log('not authenticated');
-		return res.status(400).send({ verification: false, msg: 'Incorrect OTP' });
+		try{
+			const existingBlock = await Block.findOne({phone});
+			if(existingBlock){
+				existingBlock.attempts=existingBlock.attempts-1;
+				if(existingBlock.attempts<=0)
+				{
+					existingBlock.blocked=true;
+				}
+				existingBlock.save();
+			}
+
+		}catch (error){
+
+		}
+		return res.status(400).send({ verification: false, msg: 'Incorrect OTP',retry:req.body.retry-1 });
 	}
 }
 
