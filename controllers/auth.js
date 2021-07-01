@@ -22,21 +22,24 @@ const client = twilio(accountSid, authToken);
 
 
 export const verifyjwt = (req,res) => {
-	
+	console.log("jwt")
 	const token = req.headers.authorization.split(" ")[1];
-	console.log(token);
 	
 	try{
 		const decoded=jwt.verify(token,JWT_AUTH_TOKEN);
+		console.log(" jwt pass new")
 		return res.status(200).send(decoded.user);
 	}catch (error)
 	{
+		console.log(" jwt fail")
 		return res.status(400).send("Invalid token");
 	}
 	
 }
 
 export const sendotp = (req,res) => {
+	console.log("all good");
+	console.log(req.body);
     
     const phone = req.body.phone;
 	const country_code = req.body.country_code;
@@ -61,6 +64,7 @@ export const sendotp = (req,res) => {
 		})
 		.then((messages) => console.log(messages))
 		.catch((err) => console.error(err)); */
+		console.log(otp);
 
 
     res.status(200).send({ phone, hash: fullHash ,otp:otp,country_code:country_code,retry:5});  
@@ -73,6 +77,7 @@ export const verifysignup = async (req,res) => {
 	const hash = req.body.hash;
 	const otp = req.body.otp;
 	const country_code = req.body.country_code;
+	console.log("signup")
 
 	let [ hashValue, expires ] = hash.split('.');
 
@@ -90,7 +95,7 @@ export const verifysignup = async (req,res) => {
 			if(existingUser){
 				return res.status(400).send({ verification: true, msg: 'User already exists'});
 			}
-			const result = await User.create({phone,country_code});
+			const result = await User.create({phone,country_code,name:phone});
 			const newblock = await Block.create({phone,country_code});
 			const token=jwt.sign({user:result},JWT_AUTH_TOKEN,{expiresIn:"48h"});
 			return res.status(201).send({user:result,token:token});
@@ -100,7 +105,7 @@ export const verifysignup = async (req,res) => {
 
 	}else {
 		console.log('not authenticated');
-		return res.status(400).send({ verification: false, msg: 'Incorrect OTP' });
+		return res.status(400).send(JSON.stringify( {verification: false, msg: 'Incorrect OTP' }));
 	}
 }
 

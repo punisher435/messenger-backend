@@ -20,7 +20,7 @@ const userSchema = new Schema({
         type: String,
         default: "Hey there!"
     },
-    contacts:[{
+    blocklist:[{
         type: String,
     }],
     img:
