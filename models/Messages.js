@@ -7,6 +7,10 @@ const messageSchema = new Schema({
         type:String,
         required:true,
     },
+    senderid:{
+        type:String,
+        required:true,
+    },
     image:{
         type:String,
     },

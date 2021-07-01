@@ -6,9 +6,7 @@ const roomSchema = new Schema({
     members:[{
         type:String,
     }],
-    messages:[{
-        type:String,
-    }],
+   
     block:{
         type:Boolean,
         default:false,

@@ -2,10 +2,12 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
-import AuthRoutes from "./routes/auth.js";
 import bodyParser from 'body-parser';
 import multer from 'multer';
 import cloudinary from 'cloudinary';
+
+import AuthRoutes from "./routes/auth.js";
+import MessageRoutes from './routes/message.js';
 dotenv.config()
 
 //App config
@@ -65,8 +67,9 @@ cloudinary.config({
 app.get('/',(req,res) => res.status(200).send(`hello`))
 
 app.use('/auth',AuthRoutes);
+app.use('/messages',MessageRoutes);
 
-app.post("/add", upload.single("image"), (req, res) => {
+app.post(`${process.env.IMAGE_UPLOAD_URL}`, upload.single("image"), (req, res) => {
     cloudinary.v2.uploader.upload(req.file.path, function(err, result) {
       if (err) {
         return res.status(200).send(err);

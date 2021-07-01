@@ -20,6 +20,9 @@ const userSchema = new Schema({
         type: String,
         default: "Hey there!"
     },
+    contacts:[{
+        type: String,
+    }],
     blocklist:[{
         type: String,
     }],
