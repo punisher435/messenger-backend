@@ -3,11 +3,12 @@ const { Schema } = mongoose;
 
 
 const messageSchema = new Schema({
-    roomid:{
+   
+    senderid:{
         type:String,
         required:true,
     },
-    senderid:{
+    receiverid:{
         type:String,
         required:true,
     },
@@ -25,6 +26,10 @@ const messageSchema = new Schema({
     },
     message:{
         type:String,   
+    },
+    seen:{
+        type:Boolean,
+        default:false,
     },
     createdDate: {
         type: Date,

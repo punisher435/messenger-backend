@@ -28,13 +28,13 @@ const userSchema = new Schema({
     }],
     img:
     {
-        data: Buffer,
-        contentType: String
+        type: String,
     },
-    profile:{
-        type:Boolean,
-        default:false
+    imgid:
+    {
+        type: String,
     },
+   
     joinDate: {
         type: Date,
         default: Date.now

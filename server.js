@@ -3,11 +3,12 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cors from "cors";
 import bodyParser from 'body-parser';
-import multer from 'multer';
 import cloudinary from 'cloudinary';
 
 import AuthRoutes from "./routes/auth.js";
 import MessageRoutes from './routes/message.js';
+import User from './routes/user.js';
+import {upload} from './Middlewares/multer.js';
 dotenv.config()
 
 //App config
@@ -35,22 +36,7 @@ if(process.env.MONGO_DB_URL)
 }
 
 
-const storage = multer.diskStorage({
-    filename: function(req, file, callback) {
-    callback(null, Date.now() + file.originalname);
-    },
-    destination:'./uploads',
-    });
 
-const imageFilter = function(req, file, cb) {
-    // accept image files only
-    if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/i)) {
-    return cb(new Error("Only image files are accepted!"), false);
-    }
-    cb(null, true);
-    };
-
-const upload = multer({ storage: storage, fileFilter: imageFilter });
 
 
 cloudinary.config({
@@ -68,8 +54,9 @@ app.get('/',(req,res) => res.status(200).send(`hello`))
 
 app.use('/auth',AuthRoutes);
 app.use('/messages',MessageRoutes);
+app.use('/user',User);
 
-app.post(`${process.env.IMAGE_UPLOAD_URL}`, upload.single("image"), (req, res) => {
+app.post(`/${process.env.IMAGE_UPLOAD_URL}`, upload.single("image"), (req, res) => {
     cloudinary.v2.uploader.upload(req.file.path, function(err, result) {
       if (err) {
         return res.status(200).send(err);

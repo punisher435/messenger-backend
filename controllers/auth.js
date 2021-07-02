@@ -21,14 +21,17 @@ const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = twilio(accountSid, authToken);
 
 
-export const verifyjwt = (req,res) => {
+export const verifyjwt =async (req,res) => {
 	console.log("jwt")
 	const token = req.headers.authorization.split(" ")[1];
 	
 	try{
 		const decoded=jwt.verify(token,JWT_AUTH_TOKEN);
-		console.log(" jwt pass new")
-		return res.status(200).send(decoded.user);
+		const existingUser = await User.findOne({phone:decoded.user.phone});
+			if(existingUser){
+				return res.status(200).send(existingUser);
+			}
+			return res.status(400).send("Invalid token");
 	}catch (error)
 	{
 		console.log(" jwt fail")
