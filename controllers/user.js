@@ -71,12 +71,15 @@ export const editprofile = async (req,res) => {
         if(reqUser)
         {
             console.log(req.file);
-            
-           const result = await uploadimage(req.file);
+            if(req.file)
+           {const result = await uploadimage(req.file);
            console.log(result);
            reqUser.name=req.body.name;
            reqUser.img=result.secure_url;
-           reqUser.imgid=result.public_id;
+           reqUser.imgid=result.public_id;}
+           else{
+            reqUser.name=req.body.name;
+           }
             reqUser.save();
             return res.status(200).send(reqUser);
         }

@@ -9,6 +9,10 @@ import User from "../models/user.js";
 import ChatRoom from "../models/ChatRoom.js";
 import Messages from "../models/Messages.js";
 import axios from 'axios'
+import Limits from './limit.js';
+import {auth} from "../Middlewares/auth_help.js";
+import { uploadimage } from "../Middlewares/cloudinary.js";
+import { uploadraw } from "../Middlewares/cloudinary_raw.js";
 
 const router = express.Router();
 
@@ -129,7 +133,7 @@ export const getrecent = async (req,res) => {
         let result=[];
         for(let i=0;i<contacts.length;i++)
     {
-        const recentmsg = await Messages.findOne({sender_id:{ $in: [reqUser._id,contacts[i]._id]}}).sort({createdDate: -1});
+        const recentmsg = await Messages.findOne({senderid:{ $in: [reqUser._id,contacts[i]._id]},receiverid:{ $in: [reqUser._id,contacts[i]._id]}}).sort({createdDate: -1});
         if(recentmsg){
         const temp = {
             recentmessage:recentmsg,
@@ -155,8 +159,87 @@ export const getrecent = async (req,res) => {
 }
 
 export const sendmessage = async (req,res) => {
-    console.log(req.body);
+    try{
+        console.log(req.file);
+        console.log(req.body);
+    
+        const data=await auth(req,res);
+    
+        const recid = req.query.recid;
+    
+        const recentmsg = await Messages.create({
+            senderid:data.user._id,
+            receiverid:recid,
+        })
+        
+        if(req.file)
+               {
+                   if(req.file.mimetype==='image/jpeg')
+                   {
+                   const result = await uploadimage(req.file);
+               console.log(result);
+              
+               recentmsg.image=result.secure_url;
+               recentmsg.imageid=result.public_id;
+                   }
+                   else{
+                    const result = await uploadraw(req.file);
+                    console.log(result);
+                   
+                    recentmsg.audio=result.secure_url;
+                    recentmsg.audioid=result.public_id;
+                   }
+            }
+            recentmsg.message=req.body.text;
+            recentmsg.save();
+    
+        return res.status(200).send(recentmsg);
+    }
+    catch(error)
+    {
+        console.log(error);
+        return res.status(400).send("fail");
+    }
+   
 
+}
+
+export const loadchats = async (req,res) => {
+    try{
+    const recid = req.query.recid;
+    const page = req.query.page;
+    const reqUser= req.userId;
+    console.log(recid);
+    const recentmsg = await Messages.find({senderid:{ $in: [reqUser._id,recid]},receiverid:{ $in: [reqUser._id,recid]}})
+    .limit(Limits.messageloadlimit*parseInt(page)).sort({createdDate: +1});
+     
+    return res.status(200).send(recentmsg);
+    }
+    catch(error){
+        console.log(error);
+        return res.status(400).send({msg:"Could not load chats"})
+    }
+}
+
+
+export const seenchats = async (req,res) => {
+    try{
+    const recid = req.query.recid;
+    
+    const reqUser= req.userId;
+   
+    const recentmsg = await Messages.findOne({senderid:{ $in: [reqUser._id]},receiverid:{ $in: [recid]}})
+    .sort({createdDate: -1});
+
+    recentmsg.seen=true;
+    recentmsg.save();
+     
+    return res.status(200).send("done");
+    }
+    catch(error){
+        console.log(error);
+        return res.status(400).send({msg:"Could not load chats"})
+    }
 }
 
 export default router;
