@@ -228,11 +228,12 @@ export const seenchats = async (req,res) => {
     
     const reqUser= req.userId;
    
-    const recentmsg = await Messages.findOne({senderid:{ $in: [reqUser._id]},receiverid:{ $in: [recid]}})
+    const recentmsg = await Messages.findOne({senderid:{ $in: [recid]},receiverid:{ $in: [reqUser._id]}})
     .sort({createdDate: -1});
 
-    recentmsg.seen=true;
-    recentmsg.save();
+    if(recentmsg)
+    {recentmsg.seen=true;
+    recentmsg.save();}
      
     return res.status(200).send("done");
     }
