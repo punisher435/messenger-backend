@@ -34,6 +34,9 @@ const userSchema = new Schema({
     {
         type: String,
     },
+    pushtoken: {
+        type: String,
+    },
    
     joinDate: {
         type: Date,

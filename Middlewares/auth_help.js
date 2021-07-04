@@ -9,7 +9,7 @@ const JWT_AUTH_TOKEN = process.env.JWT_AUTH_TOKEN;
 export const auth = async (req,res) => {
     try {
         const token = req.headers.authorization.split(" ")[1];
-        console.log(token);
+       
         let decodeddata;
         if(token)
         {

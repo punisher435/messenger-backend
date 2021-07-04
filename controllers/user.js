@@ -94,6 +94,30 @@ export const editprofile = async (req,res) => {
 }
 
 
+export const registerpushtoken = async (req,res) => {
+
+    
+    try{
+        const reqUser = await User.findOne({_id:req.userId._id});
+        
+        if(reqUser)
+        {
+            console.log(req.body);
+            reqUser.pushtoken=req.body.pushtoken;
+            reqUser.save();
+            return res.status(200).send(reqUser);
+        }
+        return res.status(400).send({msg:'Error'});
+    }
+    catch(error){
+        return res.status(400).send({error});
+    }
+
+   
+
+}
+
+
 
 
 export default router;

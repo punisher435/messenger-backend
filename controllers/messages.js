@@ -13,6 +13,7 @@ import Limits from './limit.js';
 import {auth} from "../Middlewares/auth_help.js";
 import { uploadimage } from "../Middlewares/cloudinary.js";
 import { uploadraw } from "../Middlewares/cloudinary_raw.js";
+import { send } from "../Middlewares/notification.js";
 
 const router = express.Router();
 
@@ -68,13 +69,13 @@ export const getroom = async (req,res) => {
 
 export const addroom = async (req,res) => {
     try{
-        console.log(req.body);
+       
         
         const {phone,country_code}=req.body;
-        console.log(phone);
+     
         const existingUser = await User.findOne({phone:phone});
         const reqUser = await User.findOne({_id:req.userId._id});
-        console.log("got it");
+       
         if(!existingUser){
             return res.status(400).send({ msg:'User does not exists'});
         }
@@ -122,7 +123,7 @@ export const getroom = async (req,res) => {
 
 }
 export const getrecent = async (req,res) => {
-    console.log('hello')
+ 
     const reqUser = await User.findOne({_id:req.userId._id});
     const contacts = await User.find({_id:{ $in: reqUser.contacts}});
     let result=[];
@@ -160,8 +161,7 @@ export const getrecent = async (req,res) => {
 
 export const sendmessage = async (req,res) => {
     try{
-        console.log(req.file);
-        console.log(req.body);
+      
     
         const data=await auth(req,res);
     
@@ -177,14 +177,14 @@ export const sendmessage = async (req,res) => {
                    if(req.file.mimetype==='image/jpeg')
                    {
                    const result = await uploadimage(req.file);
-               console.log(result);
+             
               
                recentmsg.image=result.secure_url;
                recentmsg.imageid=result.public_id;
                    }
                    else{
                     const result = await uploadraw(req.file);
-                    console.log(result);
+                   
                    
                     recentmsg.audio=result.secure_url;
                     recentmsg.audioid=result.public_id;
@@ -192,6 +192,13 @@ export const sendmessage = async (req,res) => {
             }
             recentmsg.message=req.body.text;
             recentmsg.save();
+
+            const receiver = await User.findOne({_id:recid});
+            if(receiver && receiver.pushtoken)
+            {
+              
+                send(receiver.pushtoken,"New message","You have a new message from ",data.user.name);
+            }
     
         return res.status(200).send(recentmsg);
     }
@@ -209,11 +216,13 @@ export const loadchats = async (req,res) => {
     const recid = req.query.recid;
     const page = req.query.page;
     const reqUser= req.userId;
-    console.log(recid);
+    
     const recentmsg = await Messages.find({senderid:{ $in: [reqUser._id,recid]},receiverid:{ $in: [reqUser._id,recid]}})
-    .limit(Limits.messageloadlimit*parseInt(page)).sort({createdDate: +1});
+    .sort({createdDate: -1}).limit(Limits.messageloadlimit*parseInt(page));
+
+    const sortedresult = recentmsg.sort((a, b) => b.createdDate > a.createdDate ? -1: +1);
      
-    return res.status(200).send(recentmsg);
+    return res.status(200).send(sortedresult);
     }
     catch(error){
         console.log(error);

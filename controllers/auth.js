@@ -22,7 +22,7 @@ const client = twilio(accountSid, authToken);
 
 
 export const verifyjwt =async (req,res) => {
-	console.log("jwt")
+
 	const token = req.headers.authorization.split(" ")[1];
 	
 	try{
