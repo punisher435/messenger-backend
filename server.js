@@ -4,16 +4,69 @@ import dotenv from "dotenv";
 import cors from "cors";
 import bodyParser from 'body-parser';
 import cloudinary from 'cloudinary';
+import socketio from 'socket.io';
+import { ExpressPeerServer } from "peer";
+import http from 'http';
 
 import AuthRoutes from "./routes/auth.js";
 import MessageRoutes from './routes/message.js';
 import User from './routes/user.js';
 import {upload} from './Middlewares/multer.js';
+
 dotenv.config()
 
 //App config
 const app = express();
 const port = process.env.PORT || 8001
+
+const server = http.createServer(app);
+const io = socketio(server).sockets;
+
+const servernew = http.createServer(app);
+
+const customGenerationFunction = () =>
+  (Math.random().toString(36) + "0000000000000000000").substr(2, 16);
+
+const peerServer = ExpressPeerServer(servernew, {
+  debug: true,
+  path: "/",
+  generateClientId: customGenerationFunction,
+});
+
+app.use("/mypeer", peerServer);
+
+
+
+io.on('connection', function(socket) {
+ 
+  console.log('Client connected.');
+
+  // Disconnect listener
+  socket.on('disconnect', function() {
+      console.log('Client disconnected.');
+  });
+  socket.on('join-room',({userId,roomId}) => {
+    console.log("join room")
+    socket.join(roomId);
+    console.log("joined room")
+
+    socket.in(roomId).emit('user-connected',userId);
+   
+    
+    
+  })
+
+ 
+});
+
+
+
+
+//peer
+
+
+/* app.use("/mypeer",peerServer); */
+
 
 //Middlewares
 app.use(bodyParser.json({ limit: '30mb', extended: true }))
@@ -71,5 +124,16 @@ app.post(`/${process.env.IMAGE_UPLOAD_URL}`, upload.single("image"), (req, res) 
   });
 
 
+
+
+  server.listen(3030,() => {console.log(`listening on socket io server on 3030`)})
+
+  servernew.listen(8878,() => {console.log(`listening on socket io server on 3030`)})
+
 //Listener
 app.listen(port,() => {console.log(`listening on localhost ${port}`)})
+
+
+
+
+
