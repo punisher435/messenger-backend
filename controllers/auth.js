@@ -59,14 +59,14 @@ export const sendotp = (req,res) => {
 	const fullHash = `${hash}.${expires}`;
 
 
-    /* client.messages
+    client.messages
 		.create({
 			body: `Your one time login password for ${process.env.NAME} is ${otp}`,
 			from: twilioNum,
 			to: country_code+phone
 		})
 		.then((messages) => console.log(messages))
-		.catch((err) => console.error(err)); */
+		.catch((err) => console.error(err));
 		console.log(otp);
 
 
