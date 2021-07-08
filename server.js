@@ -27,7 +27,7 @@ const servernew = http.createServer(app);
 const customGenerationFunction = () =>
   (Math.random().toString(36) + "0000000000000000000").substr(2, 16);
 
-const peerServer = ExpressPeerServer(servernew, {
+const peerServer = ExpressPeerServer(server, {
   debug: true,
   path: "/",
   generateClientId: customGenerationFunction,
@@ -126,12 +126,14 @@ app.post(`/${process.env.IMAGE_UPLOAD_URL}`, upload.single("image"), (req, res) 
 
 
 
-  server.listen(3030,() => {console.log(`listening on socket io server on 3030`)})
 
-  servernew.listen(8878,() => {console.log(`listening on socket io server on 3030`)})
 
 //Listener
-app.listen(port,() => {console.log(`listening on localhost ${port}`)})
+server.listen(port,() => {console.log(`listening on localhost ${port}`)});
+
+
+
+
 
 
 
