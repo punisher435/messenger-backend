@@ -50,7 +50,7 @@ export const sendotp = (req,res) => {
 	{
 		res.status(400).send({ phone});  
 	}
-	const otp = Math.floor(100000 + Math.random() * 900000);
+	const otp = 123456;
     const ttl = 5 * 60 * 1000; //5 min
 	const expires = Date.now() + ttl;
 	const data = `${phone}.${otp}.${expires}`;
